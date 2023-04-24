@@ -1,0 +1,16 @@
+{
+"companyName": "DefaultCompany",
+"productName": "ARWT",
+"productVersion": "0.1",
+"dataUrl": "yyyyyy.data.unityweb",
+"wasmCodeUrl": "yyyyyy.wasm",
+"wasmFrameworkUrl": "yyyyyy.wasm.framework.unityweb",
+"graphicsAPI": ["WebGL 2.0","WebGL 1.0"],
+"webglContextAttributes": {"preserveDrawingBuffer": false},
+"splashScreenStyle": "Dark",
+
+"cacheControl": {"default": "must-revalidate"},
+"developmentBuild": false,
+"multithreading": false,
+"unityVersion": "2019.4.11f1"
+}
