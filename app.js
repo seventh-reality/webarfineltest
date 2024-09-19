@@ -164,7 +164,7 @@ class OxExperienceUI {
         this._errorScreen = document.querySelector("#error-screen");
         this._errorTitle = document.querySelector("#error-title");
         this._errorMessage = document.querySelector("#error-message");
-
+        this._transformControls = document.querySelector("#transform-controls");
         this._colorControls = document.querySelector("#color-controls");
         this._placeButton = document.querySelector("#tap-to-place");
         this._black = document.querySelector("#black");
