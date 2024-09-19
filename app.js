@@ -66,7 +66,7 @@ class OxExperience {
                     child.material.needsUpdate = true;
                 }
             });
-            this._model.scale.set(0.5, 0.5, 0.5);
+            this._scene.scale.set(0.5, 0.5, 0.5);
             this._scene.add(this._model);
             this._modelPlaced = true;
         });
@@ -142,11 +142,11 @@ class OxExperience {
     }
 
     scaleCar(value) {
-        this._model.scale.set(value, value, value);
+        this._scene.scale.set(value, value, value);
     }
 
     rotateCar(value) {
-        this._model.rotation.y = value;
+        this._scene.rotation.y = value;
     }
 
     changeCarColor(value) {
