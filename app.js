@@ -36,11 +36,11 @@ class OxExperience {
             });
 
             this.render();
-        })
+        });
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
             this.render();
-        })
+        });
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
             this.updatePose(pose);
@@ -76,7 +76,7 @@ class OxExperience {
         this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
         const config = {
             mode: OnirixSDK.TrackingMode.Surface,
-        }
+        };
         return this.oxSDK.init(config);
     }
 
@@ -141,14 +141,6 @@ class OxExperience {
         this._renderer.setSize(width, height);
     }
 
-    scaleCar(value) {
-        this._scene.scale.set(value, value, value);
-    }
-
-    rotateCar(value) {
-        this._scene.rotation.y = value;
-    }
-
     changeCarColor(value) {
         this._model.traverse((child) => {
             if (child.material && child.material.name === "CarPaint") {
@@ -173,36 +165,20 @@ class OxExperienceUI {
         this._errorTitle = document.querySelector("#error-title");
         this._errorMessage = document.querySelector("#error-message");
 
-        this._transformControls = document.querySelector("#transform-controls");
         this._colorControls = document.querySelector("#color-controls");
         this._placeButton = document.querySelector("#tap-to-place");
-        this._scaleSlider = document.querySelector("#scale-slider");
-        this._rotationSlider = document.querySelector("#rotation-slider");
         this._black = document.querySelector("#black");
         this._orange = document.querySelector("#orange");
         this._blue = document.querySelector("#blue");
         this._silver = document.querySelector("#silver");
     }
 
-    showControls() {
-        this._transformControls.style.display = "block";
-    }
-
     showColors() {
-        this._transformControls.style.display = "none";
         this._colorControls.style.display = "block";
     }
 
     onPlace(listener) {
         this._placeButton.addEventListener('click', listener);
-    }
-
-    onScaleChange(listener) {
-        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
-    }
-
-    onRotationChange(listener) {
-        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
     }
 
     onBlack(listener) {
@@ -242,35 +218,32 @@ try {
 
     oxUI.onPlace(() => { 
         oxExp.placeCar();
-        oxUI.showColors() 
-    })
+        oxUI.showColors();
+    });
     
     oxExp.onHitTest(() => { 
         if (!oxExp.isCarPlaced()) {
-            oxUI.showControls();
+            oxUI.showColors();
         }
     });
 
-    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) })
-    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) })
-
-    oxUI.onBlack(() => oxExp.changeCarColor(0x111111))
-    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff))
-    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600))
-    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff))
+    oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
+    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
+    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
+    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
     
     oxUI.hideLoadingScreen();
 
 } catch (error) {
     switch (error.name) {
         case 'INTERNAL_ERROR':
-            oxUI.showError('Internal Error', 'An unespecified error has occurred. Your device might not be compatible with this experience.');
+            oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
             break;
         case 'CAMERA_ERROR':
-            oxUI.showError('Camera Error', 'Could not access to your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
+            oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please ensure you have given the required permissions from your browser settings.');
             break;
         case 'SENSORS_ERROR':
-            oxUI.showError('Sensors Error', 'Could not access to your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
+            oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please ensure you have given the required permissions from your browser settings.');
             break;
         case 'LICENSE_ERROR':
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
