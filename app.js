@@ -110,6 +110,9 @@ class OxExperience {
 
         // Create an empty scene
         this._scene = new THREE.Scene();
+        this._sceneScaleUp = document.querySelector("#scene-scale-up");
+        this._sceneScaleDown = document.querySelector("#scene-scale-down");
+
 
         // Add some lights
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
@@ -121,6 +124,14 @@ class OxExperience {
     render() {
         this._renderer.render(this._scene, this._camera);
     }
+    onSceneScaleUp(listener) {
+    this._sceneScaleUp.addEventListener('click', listener);
+}
+
+onSceneScaleDown(listener) {
+    this._sceneScaleDown.addEventListener('click', listener);
+}
+
 
     updatePose(pose) {
         // When a new pose is detected, update the 3D camera
@@ -200,7 +211,8 @@ class OxExperienceUI {
     onScaleChange(listener) {
         this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
     }
-
+    oxUI.onRotationChange((value) => { oxExp.rotateCar(value); });
+    oxUI.onScaleChange((value) => { oxExp.scaleCar(value); });
     onRotationChange(listener) {
         this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
     }
@@ -253,6 +265,9 @@ try {
 
     oxUI.onRotationChange((value) => { oxExp.rotateCar(value) })
     oxUI.onScaleChange((value) => { oxExp.scaleCar(value) })
+    oxUI.onSceneScaleUp(() => { oxExp.scaleScene(1.1) });
+    oxUI.onSceneScaleDown(() => { oxExp.scaleScene(0.9) });
+
 
     oxUI.onBlack(() => oxExp.changeCarColor(0x111111))
     oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff))
