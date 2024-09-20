@@ -66,7 +66,6 @@ class OxExperience {
                     child.material.needsUpdate = true;
                 }
             });
-            this._scene.scale.set(0.5, 0.5, 0.5);
             this._scene.add(this._model);
             this._modelPlaced = true;
         });
