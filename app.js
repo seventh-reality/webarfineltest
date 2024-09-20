@@ -66,7 +66,7 @@ class OxExperience {
                     child.material.needsUpdate = true;
                 }
             });
-            
+            this._model.scale.set(0.5, 0.5, 0.5);
             this._scene.add(this._model);
             this._modelPlaced = true;
         });
@@ -141,6 +141,14 @@ class OxExperience {
         this._renderer.setSize(width, height);
     }
 
+    scaleCar(value) {
+        this._model.scale.set(value, value, value);
+    }
+
+    rotateCar(value) {
+        this._model.rotation.y = value;
+    }
+
     changeCarColor(value) {
         this._model.traverse((child) => {
             if (child.material && child.material.name === "CarPaint") {
@@ -168,6 +176,8 @@ class OxExperienceUI {
         this._transformControls = document.querySelector("#transform-controls");
         this._colorControls = document.querySelector("#color-controls");
         this._placeButton = document.querySelector("#tap-to-place");
+        this._scaleSlider = document.querySelector("#scale-slider");
+        this._rotationSlider = document.querySelector("#rotation-slider");
         this._black = document.querySelector("#black");
         this._orange = document.querySelector("#orange");
         this._blue = document.querySelector("#blue");
@@ -185,6 +195,14 @@ class OxExperienceUI {
 
     onPlace(listener) {
         this._placeButton.addEventListener('click', listener);
+    }
+
+    onScaleChange(listener) {
+        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
+    }
+
+    onRotationChange(listener) {
+        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
     }
 
     onBlack(listener) {
@@ -233,7 +251,8 @@ try {
         }
     });
 
-    
+    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) })
+    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) })
 
     oxUI.onBlack(() => oxExp.changeCarColor(0x111111))
     oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff))
