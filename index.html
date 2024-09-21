@@ -23,6 +23,7 @@
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x808080); // Set background color to gray
             document.body.appendChild(renderer.domElement);
 
             // Add ambient light
@@ -40,8 +41,6 @@
             pointLight.castShadow = true; // Enable shadow
             scene.add(pointLight);
 
-            // Add a Point Light Helper (optional for debugging)
-            
             const loader = new THREE.GLTFLoader();
             loader.load('Steerad.glb', (gltf) => {
                 model = gltf.scene;
