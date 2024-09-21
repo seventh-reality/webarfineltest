@@ -10,47 +10,76 @@
     </style>
 </head>
 <body>
-    <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
-        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script>
+        let scene, camera, renderer, model;
+        let startDistance = 0;
 
-        // Set up scene, camera, and renderer
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-        // Add a light
-        const light = new THREE.AmbientLight(0xffffff, 1); // soft white light
-        scene.add(light);
+            const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+            light.position.set(0, 20, 0);
+            scene.add(light);
 
-        // Load GLB model
-        const loader = new GLTFLoader();
-        loader.load('range_rover.glb', (gltf) => {
-            scene.add(gltf.scene);
-            gltf.scene.position.set(0, 0, 0); // Adjust position if needed
-        }, undefined, (error) => {
-            console.error(error);
-        });
+            const loader = new THREE.GLTFLoader();
+            loader.load('range_rover.glb', (gltf) => {
+                model = gltf.scene;
+                scene.add(model);
+                model.position.set(0, 0, 0);
+            });
 
-        // Set camera position
-        camera.position.z = 5;
+            camera.position.z = 5;
 
-        // Animation loop
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('touchstart', onTouchStart, false);
+            document.addEventListener('touchmove', onTouchMove, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onTouchStart(event) {
+            if (event.touches.length === 2) {
+                startDistance = getDistance(event.touches[0], event.touches[1]);
+            }
+        }
+
+        function onTouchMove(event) {
+            if (event.touches.length === 2) {
+                const currentDistance = getDistance(event.touches[0], event.touches[1]);
+                const scaleFactor = currentDistance / startDistance;
+
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                startDistance = currentDistance;
+
+                const rotationAmount = 0.01; // Adjust this value for faster/slower rotation
+                model.rotation.y += rotationAmount; // Rotate on Y-axis
+            }
+        }
+
+        function getDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
-        animate();
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        init();
+        animate();
     </script>
 </body>
 </html>
