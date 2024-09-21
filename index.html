@@ -1,38 +1,137 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-        <title>Onirix Web AR SDK - ThreeJS surface-tracking test</title>
-        <script async type="module" src="app.js"></script>
-        <link rel="stylesheet" href="app.css" />
-    </head>
-    <body>
-        <div id="loading-screen">
-            <div class="bounce1"></div>
-            <div class="bounce2"></div>
-            <div class="bounce3"></div>
-        </div>
-        <div id="error-screen">
-            <span id="error-title"></span>
-            <span id="error-message"></span>
-        </div>
-        <!-- Scene scale controls -->
-<div id="scene-scale-controls">
-    <button id="scene-scale-up">Scale Scene Up</button>
-    <button id="scene-scale-down">Scale Scene Down</button>
-</div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Model Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+        <input type="file" id="fileInput" accept=".glb" />
+        <button id="loadModelButton">Load 3D Model</button>
+    </div>
 
-        <div id="initializing"></div>
-        <div id="transform-controls">
-            <input id="rotation-slider" type="range" min="0" max="360" value="180">
-            <input id="scale-slider" type="range" min="10" max="100" value="50">
-            <button id="tap-to-place">Tap to place</button>
-        </div>
-        <div id="color-controls">
-            <span id="black"></span>
-            <span id="orange"></span>
-            <span id="blue"></span>
-            <span id="silver"></span>
-        </div>
-    </body>
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+    <!-- GLTFLoader -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/jsm/loaders/GLTFLoader.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/jsm/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, controls, model;
+
+        function init() {
+            // Create the scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xdddddd);
+
+            // Set up camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 2, 5);
+
+            // Set up renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Orbit controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            // Add directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 10);
+            scene.add(directionalLight);
+
+            // Start rendering
+            animate();
+        }
+
+        // Function to load the GLB model from local file input
+        function loadModel(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const loader = new THREE.GLTFLoader();
+                loader.parse(event.target.result, '', (gltf) => {
+                    // Remove the previous model if one exists
+                    if (model) {
+                        scene.remove(model);
+                    }
+
+                    model = gltf.scene;
+                    model.position.set(0, 0, 0);
+                    scene.add(model);
+
+                    // Adjust camera and controls to fit model
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3()).length();
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    controls.reset();
+                    model.position.x += (model.position.x - center.x);
+                    model.position.y += (model.position.y - center.y);
+                    model.position.z += (model.position.z - center.z);
+
+                    camera.position.copy(center);
+                    camera.position.z += size * 1.5;
+                    controls.update();
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Handle button click to load model
+        document.getElementById('loadModelButton').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (file) {
+                loadModel(file);
+            } else {
+                alert('Please select a .glb file.');
+            }
+        });
+
+        // Resize event handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Initialize the scene on page load
+        init();
+    </script>
+</body>
 </html>
