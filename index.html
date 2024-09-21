@@ -10,10 +10,10 @@
     </style>
 </head>
 <body>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/loaders/GLTFLoader.js"></script>
-    
-    <script>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
+        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+
         // Set up scene, camera, and renderer
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -27,7 +27,7 @@
         scene.add(light);
 
         // Load GLB model
-        const loader = new THREE.GLTFLoader();
+        const loader = new GLTFLoader();
         loader.load('range_rover.glb', (gltf) => {
             scene.add(gltf.scene);
             gltf.scene.position.set(0, 0, 0); // Adjust position if needed
