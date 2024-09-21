@@ -33,6 +33,9 @@
             const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // White light
             directionalLight.position.set(5, 10, 7.5); // Position it to shine down on the model
             scene.add(directionalLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(5, 10, 5);
+            this._scene.add(pointLight);
 
             const loader = new THREE.GLTFLoader();
             loader.load('range_rover.glb', (gltf) => {
