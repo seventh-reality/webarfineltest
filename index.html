@@ -12,9 +12,10 @@
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/controls/OrbitControls.js"></script>
     
     <script>
-        let scene, camera, renderer, model;
+        let scene, camera, renderer, model, controls;
         let startDistance = 0;
 
         function init() {
@@ -33,10 +34,6 @@
             directionalLight.position.set(5, 10, 7.5); // Position it to shine down on the model
             scene.add(directionalLight);
 
-            // Optional: Add a helper to visualize the directional light
-            const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 1);
-            scene.add(lightHelper);
-
             const loader = new THREE.GLTFLoader();
             loader.load('range_rover.glb', (gltf) => {
                 model = gltf.scene;
@@ -45,6 +42,12 @@
             });
 
             camera.position.z = 5;
+
+            // Initialize OrbitControls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            controls.dampingFactor = 0.25;
+            controls.screenSpacePanning = false; // Set to true if you want to allow panning
 
             window.addEventListener('resize', onWindowResize, false);
             document.addEventListener('touchstart', onTouchStart, false);
@@ -70,9 +73,6 @@
 
                 model.scale.set(scaleFactor, scaleFactor, scaleFactor);
                 startDistance = currentDistance;
-
-                const rotationAmount = 0.01; // Adjust this value for faster/slower rotation
-                model.rotation.y += rotationAmount; // Rotate on Y-axis
             }
         }
 
@@ -84,6 +84,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
+            controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
             renderer.render(scene, camera);
         }
 
