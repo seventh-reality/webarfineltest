@@ -5,11 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js GLB Viewer</title>
     <style>
-        body { margin: 0; }
+        body { margin: 0; position: relative; }
         canvas { display: block; }
+        button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
+    <button id="openWebsite">Open Website</button>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/controls/OrbitControls.js"></script>
@@ -60,6 +73,13 @@
             window.addEventListener('resize', onWindowResize, false);
             document.addEventListener('touchstart', onTouchStart, false);
             document.addEventListener('touchmove', onTouchMove, false);
+            
+            // Button click event
+            document.getElementById('openWebsite').addEventListener('click', openWebsite);
+        }
+
+        function openWebsite() {
+            window.open('https://seventh-reality.github.io/Sterrad_Android_IOS/', '_blank'); // Replace with your URL
         }
 
         function onWindowResize() {
