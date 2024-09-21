@@ -34,21 +34,31 @@
             directionalLight.position.set(5, 10, 7.5); // Position it to shine down on the model
             scene.add(directionalLight);
 
+            // Add a Point Light
+            const pointLight = new THREE.PointLight(0xffffff, 1, 50); // White light, intensity, distance
+            pointLight.position.set(0, 5, 5); // Position it
+            pointLight.castShadow = true; // Enable shadow
+            scene.add(pointLight);
+
+            // Add a Point Light Helper (optional for debugging)
+            const pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
+            scene.add(pointLightHelper);
+
             const loader = new THREE.GLTFLoader();
             loader.load('range_rover.glb', (gltf) => {
                 model = gltf.scene;
                 scene.add(model);
                 model.position.set(0, 0, 0);
-                model.scale.set(3,3,3);
+                model.scale.set(3, 3, 3);
             });
 
             camera.position.z = 5;
 
             // Initialize OrbitControls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            controls.enableDamping = true;
             controls.dampingFactor = 0.25;
-            controls.screenSpacePanning = false; // Set to true if you want to allow panning
+            controls.screenSpacePanning = false;
 
             window.addEventListener('resize', onWindowResize, false);
             document.addEventListener('touchstart', onTouchStart, false);
@@ -85,7 +95,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+            controls.update();
             renderer.render(scene, camera);
         }
 
