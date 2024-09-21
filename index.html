@@ -41,9 +41,7 @@
             scene.add(pointLight);
 
             // Add a Point Light Helper (optional for debugging)
-            const pointLightHelper = new THREE.PointLightHelper(pointLight, 1);
-            scene.add(pointLightHelper);
-
+            
             const loader = new THREE.GLTFLoader();
             loader.load('Steerad.glb', (gltf) => {
                 model = gltf.scene;
