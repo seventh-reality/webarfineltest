@@ -24,9 +24,18 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            const light = new THREE.HemisphereLight(0xffffff, 0x444444);
-            light.position.set(0, 20, 0);
-            scene.add(light);
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
+            scene.add(ambientLight);
+
+            // Add directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // White light
+            directionalLight.position.set(5, 10, 7.5); // Position it to shine down on the model
+            scene.add(directionalLight);
+
+            // Optional: Add a helper to visualize the directional light
+            const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 1);
+            scene.add(lightHelper);
 
             const loader = new THREE.GLTFLoader();
             loader.load('range_rover.glb', (gltf) => {
