@@ -36,7 +36,7 @@
             scene.add(directionalLight);
             const pointLight = new THREE.PointLight(0xffffff, 1, 100);
             pointLight.position.set(5, 10, 5);
-            this._scene.add(pointLight);
+            scene.add(pointlight)
 
             const loader = new THREE.GLTFLoader();
             loader.load('range_rover.glb', (gltf) => {
