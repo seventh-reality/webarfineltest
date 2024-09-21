@@ -30,12 +30,12 @@
             scene.add(ambientLight);
 
             // Add directional light
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // White light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 10); // White light
             directionalLight.position.set(5, 10, 7.5); // Position it to shine down on the model
             scene.add(directionalLight);
 
             // Add a Point Light
-            const pointLight = new THREE.PointLight(0xffffff, 1, 50); // White light, intensity, distance
+            const pointLight = new THREE.PointLight(0xffffff, 2, 100); // White light, intensity, distance
             pointLight.position.set(0, 5, 5); // Position it
             pointLight.castShadow = true; // Enable shadow
             scene.add(pointLight);
