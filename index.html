@@ -58,7 +58,7 @@
             scene.add(ambientLight);
 
             // Add directional light (sunlight) with shadows
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Sunlight-like light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // Sunlight-like light
             directionalLight.position.set(5, 10, 7.5); // Position it to shine down
             directionalLight.castShadow = true; // Enable shadows
             directionalLight.shadow.mapSize.width = 1024; // Shadow resolution
