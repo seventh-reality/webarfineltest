@@ -5,17 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js GLB Viewer</title>
     <style>
-        body
-        { 
-            margin: 0;
-            position: relative;
-        }
-        canvas
-        { 
-            display: block;
-        }
-        button
-        {
+        body { margin: 0; position: relative; }
+        canvas { display: block; }
+        button {
             position: absolute;
             bottom: 50px; /* Position from the bottom */
             left: 50%; /* Center horizontally */
@@ -35,69 +27,70 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/controls/OrbitControls.js"></script>
-    
+
     <script>
         let scene, camera, renderer, model, controls;
         let startDistance = 0;
 
-        function init()
-        {
+        function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            // Enable anti-aliasing and shadows in the WebGLRenderer
+            // Enable anti-aliasing in the WebGLRenderer for smoother edges
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x808080); // Set background color to gray
-            renderer.shadowMap.enabled = true; // Enable shadows
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows
+            renderer.shadowMap.enabled = true; // Enable shadow rendering
             document.body.appendChild(renderer.domElement);
 
-            // Add realistic ambient light
-            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Soft ambient light
-            scene.add(ambientLight);
+            // Realistic Lighting Setup
 
-            // Add directional light (sunlight) with shadows
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 3); // Sunlight-like light
-            directionalLight.position.set(5, 10, 7.5); // Position it to shine down
+            // Add hemisphere light for sky and ground lighting
+            const hemisphereLight = new THREE.HemisphereLight(0x4040ff, 0xffc080, 0.9); // Sky color, ground color, intensity
+            hemisphereLight.position.set(0, 20, 0); // Position it above the scene
+            scene.add(hemisphereLight);
+
+            // Add directional light (like sunlight)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Intensity of the light
+            directionalLight.position.set(10, 10, 10); // Position it
             directionalLight.castShadow = true; // Enable shadows
-            directionalLight.shadow.mapSize.width = 1024; // Shadow resolution
+            directionalLight.shadow.mapSize.width = 1024; // Shadow map resolution
             directionalLight.shadow.mapSize.height = 1024;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 500;
+            directionalLight.shadow.camera.near = 0.1; // Near clipping plane
+            directionalLight.shadow.camera.far = 50; // Far clipping plane
             scene.add(directionalLight);
 
-            // Add a spotlight to highlight the model
-            const spotLight = new THREE.SpotLight(0xffffff, 2); // Bright white light
-            spotLight.position.set(0, 10, 5); // Position above and in front of the model
-            spotLight.castShadow = true; // Enable shadows for spotlight
-            spotLight.shadow.mapSize.width = 1024;
-            spotLight.shadow.mapSize.height = 1024;
-            scene.add(spotLight);
-
-            // Add Point Light for localized lighting effects
-            const pointLight = new THREE.PointLight(0xff9900, 1.5, 50); // Warm point light
-            pointLight.position.set(-5, 5, 5); // Position for side lighting
+            // Add point light for additional illumination
+            const pointLight = new THREE.PointLight(0xfff0f0, 1, 100); // Warm light, intensity, and distance
+            pointLight.position.set(-5, 5, 5);
             pointLight.castShadow = true;
             scene.add(pointLight);
 
+            // Load an environment map for realistic reflections
+            const cubeTextureLoader = new THREE.CubeTextureLoader();
+            const environmentMap = cubeTextureLoader.load([
+                'path_to_right.jpg',
+                'path_to_left.jpg',
+                'path_to_top.jpg',
+                'path_to_bottom.jpg',
+                'path_to_front.jpg',
+                'path_to_back.jpg'
+            ]);
+            scene.environment = environmentMap; // Set the environment map
+
+            // Load the GLTF model
             const loader = new THREE.GLTFLoader();
-            loader.load('Steerad.glb', (gltf) => 
-            {
+            loader.load('Steerad.glb', (gltf) => {
                 model = gltf.scene;
-                scene.add(model);
-
-                model.position.set(0, 0, 0);
-                model.scale.set(1, 1, 1);
-
-                model.traverse(function (node)
-                {
-                    if (node.isMesh)
-                    {
-                        node.castShadow = true; // Model will cast shadows
-                        node.receiveShadow = true; // Model will receive shadows
+                model.traverse(function (child) {
+                    if (child.isMesh) {
+                        child.castShadow = true; // Cast shadows on the model
+                        child.receiveShadow = true; // Allow model to receive shadows
                     }
                 });
+                scene.add(model);
+                model.position.set(0, 0, 0);
+                model.scale.set(1, 1, 1);
             });
 
             camera.position.z = 5;
@@ -111,35 +104,29 @@
             window.addEventListener('resize', onWindowResize, false);
             document.addEventListener('touchstart', onTouchStart, false);
             document.addEventListener('touchmove', onTouchMove, false);
-            
+
             // Button click event
             document.getElementById('openWebsite').addEventListener('click', openWebsite);
         }
 
-        function openWebsite()
-        {
+        function openWebsite() {
             window.open('https://seventh-reality.github.io/Sterrad_Android_IOS/', '_blank'); // Replace with your URL
         }
 
-        function onWindowResize()
-        {
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function onTouchStart(event)
-        {
-            if (event.touches.length === 2)
-            {
+        function onTouchStart(event) {
+            if (event.touches.length === 2) {
                 startDistance = getDistance(event.touches[0], event.touches[1]);
             }
         }
 
-        function onTouchMove(event)
-        {
-            if (event.touches.length === 2)
-            {
+        function onTouchMove(event) {
+            if (event.touches.length === 2) {
                 const currentDistance = getDistance(event.touches[0], event.touches[1]);
                 const scaleFactor = currentDistance / startDistance;
 
@@ -148,15 +135,13 @@
             }
         }
 
-        function getDistance(touch1, touch2)
-        {
+        function getDistance(touch1, touch2) {
             const dx = touch1.clientX - touch2.clientX;
             const dy = touch1.clientY - touch2.clientY;
             return Math.sqrt(dx * dx + dy * dy);
         }
 
-        function animate()
-        {
+        function animate() {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
