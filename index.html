@@ -35,6 +35,8 @@
         function init() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            // Enable anti-aliasing in the WebGLRenderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setClearColor(0x808080); // Set background color to gray
@@ -54,6 +56,11 @@
             pointLight.position.set(0, 5, 5); // Position it
             pointLight.castShadow = true; // Enable shadow
             scene.add(pointLight);
+
+            // Add Hemisphere light (sky light)
+            const hemisphereLight = new THREE.HemisphereLight(0x4040ff, 0xffc080, 1); // Sky color, ground color, intensity
+            hemisphereLight.position.set(0, 10, 0);
+            scene.add(hemisphereLight);
 
             const loader = new THREE.GLTFLoader();
             loader.load('Steerad.glb', (gltf) => {
