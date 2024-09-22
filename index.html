@@ -58,7 +58,7 @@
             scene.add(pointLight);
 
             // Add Hemisphere light (sky light)
-            const hemisphereLight = new THREE.HemisphereLight(0x4040ff, 0xffc080, 1); // Sky color, ground color, intensity
+            const hemisphereLight = new THREE.HemisphereLight(0x4040ff, 0xffc080, 5); // Sky color, ground color, intensity
             hemisphereLight.position.set(0, 10, 0);
             scene.add(hemisphereLight);
 
