@@ -5,22 +5,23 @@ import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/l
 
 class OxExperience {
 
-    _renderer = null;
-    _scene = null;
-    _camera = null;
-    _models = []; // Array to hold multiple models
-    _currentModelIndex = null; // Track the currently active model
-    _surfacePlaceholder = null;
-    oxSDK;
-    _modelPlaced = false;
-    _carPlaced = false;
-
-    async init() {
-        this._raycaster = new THREE.Raycaster();
+    constructor() {
+        this._renderer = null;
+        this._scene = null;
+        this._camera = null;
+        this._models = []; // Array to hold multiple models
+        this._currentModelIndex = null; // Track the currently active model
+        this._surfacePlaceholder = null;
+        this.oxSDK = null;
+        this._modelPlaced = false;
+        this._carPlaced = false;
+        this._raycaster = null;
         this._animationMixers = [];
         this._clock = new THREE.Clock(true);
-        this._carPlaced = false;
+        this._envMap = null;
+    }
 
+    async init() {
         const renderCanvas = await this.initSDK();
         this.setupRenderer(renderCanvas);
 
@@ -37,10 +38,8 @@ class OxExperience {
             this.render();
         });
 
-        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => this.render());
         this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => this.updatePose(pose));
         this.oxSDK.subscribe(OnirixSDK.Events.OnResize, () => this.onResize());
-
         this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
             if (!this._carPlaced) {
                 this._surfacePlaceholder.position.copy(hitResult.position);
@@ -52,50 +51,30 @@ class OxExperience {
 
         const gltfLoader = new GLTFLoader();
 
-        // Load first model
-        gltfLoader.load("range_rover.glb", (gltf) => {
-            const model = gltf.scene;
-            model.traverse((child) => {
-                if (child.material) {
-                    child.material.envMap = this._envMap;
-                    child.material.needsUpdate = true;
-                }
-            });
-            model.scale.set(0.5, 0.5, 0.5);
-            model.visible = false; // Initially hidden
-            this._scene.add(model);
-            this._models.push(model);
-        });
+        // Load models
+        gltfLoader.load("range_rover.glb", (gltf) => this.loadModel(gltf));
+        gltfLoader.load("car_2.glb", (gltf) => this.loadModel(gltf));
+        gltfLoader.load("car_3.glb", (gltf) => this.loadModel(gltf));
+    }
 
-        // Load second model
-        gltfLoader.load("car_2.glb", (gltf) => {
-            const model = gltf.scene;
-            model.traverse((child) => {
-                if (child.material) {
-                    child.material.envMap = this._envMap;
-                    child.material.needsUpdate = true;
-                }
-            });
-            model.scale.set(0.5, 0.5, 0.5);
-            model.visible = false;
-            this._scene.add(model);
-            this._models.push(model);
+    loadModel(gltf) {
+        const model = gltf.scene;
+        model.traverse((child) => {
+            if (child.material) {
+                child.material.envMap = this._envMap;
+                child.material.needsUpdate = true;
+            }
         });
+        model.scale.set(0.5, 0.5, 0.5);
+        model.visible = false; // Initially hidden
+        this._scene.add(model);
+        this._models.push(model);
+    }
 
-        // Load third model
-        gltfLoader.load("car_3.glb", (gltf) => {
-            const model = gltf.scene;
-            model.traverse((child) => {
-                if (child.material) {
-                    child.material.envMap = this._envMap;
-                    child.material.needsUpdate = true;
-                }
-            });
-            model.scale.set(0.5, 0.5, 0.5);
-            model.visible = false;
-            this._scene.add(model);
-            this._models.push(model);
-        });
+    async initSDK() {
+        // SDK initialization logic goes here, return the canvas for rendering.
+        this.oxSDK = await OnirixSDK.initialize({ projectId: "your-project-id" });
+        return this.oxSDK.getRenderCanvas();
     }
 
     placeCar() {
@@ -206,8 +185,22 @@ class OxExperience {
 
 class OxExperienceUI {
 
-    _loadingScreen = null;
-    _errorScreen = null;
+    constructor() {
+        this._loadingScreen = null;
+        this._errorScreen = null;
+        this._transformControls = null;
+        this._colorControls = null;
+        this._placeButton = null;
+        this._scaleSlider = null;
+        this._rotationSlider = null;
+        this._model1Button = null;
+        this._model2Button = null;
+        this._model3Button = null;
+        this._black = null;
+        this._orange = null;
+        this._blue = null;
+        this._silver = null;
+    }
 
     init() {
         this._loadingScreen = document.querySelector("#loading-screen");
