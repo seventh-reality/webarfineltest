@@ -9,7 +9,7 @@ class OxExperience {
     _renderer = null;
     _scene = null;
     _camera = null;
-    _model = null;.
+    _model = null;
      _surfacePlaceholder = null; // Surface placeholder reference
 
     oxSDK;
