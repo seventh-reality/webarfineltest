@@ -1,5 +1,4 @@
 // ====== Imports ======
-
 import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
@@ -121,8 +120,6 @@ class OxExperience {
             this.showModel(index); // If the car is placed, switch to the selected model
         }
     }
-}
-
 
     createSurfacePlaceholder() {
         const geometry = new THREE.RingGeometry(0.1, 0.2, 32);
@@ -191,15 +188,15 @@ class OxExperience {
     }
 
     scaleCar(value) {
-        this._model.scale.set(value, value, value);
+        this._models[this._currentModelIndex].scale.set(value, value, value); // Fix: scaling the selected model
     }
 
     rotateCar(value) {
-        this._model.rotation.y = value;
+        this._models[this._currentModelIndex].rotation.y = value; // Fix: rotating the selected model
     }
 
     changeCarColor(value) {
-        this._model.traverse((child) => {
+        this._models[this._currentModelIndex].traverse((child) => {
             if (child.material && child.material.name === "CarPaint") {
                 child.material.color.setHex(value);
             }
@@ -288,25 +285,24 @@ class OxExperienceUI {
     }
 
     showError(errorTitle, errorMessage) {
-        this._errorTitle.innerText = errorTitle;
-        this._errorMessage.innerText = errorMessage;
+        this._errorScreen.querySelector("#error-title").innerText = errorTitle; // Fixed error title query selector
+        this._errorScreen.querySelector("#error-message").innerText = errorMessage; // Fixed error message query selector
         this._errorScreen.style.display = 'flex';
     }
 }
 
+// Instantiate and initialize
 const oxExp = new OxExperience();
 const oxUI = new OxExperienceUI();
 
 oxUI.init();
-try {
-    await oxExp.init();
-
-    oxUI.onPlace(() => { 
+oxExp.init().then(() => {
+    oxUI.onPlace(() => {
         oxExp.placeCar();
-        oxUI.showColors() 
+        oxUI.showColors();
     });
 
-    oxExp.onHitTest(() => { 
+    oxExp.onHitTest(() => {
         if (!oxExp.isCarPlaced()) {
             oxUI.showControls();
         }
@@ -327,7 +323,7 @@ try {
 
     oxUI.hideLoadingScreen();
 
-} catch (error) {
+}).catch((error) => {
     switch (error.name) {
         case 'INTERNAL_ERROR':
             oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
@@ -340,6 +336,6 @@ try {
             break;
         case 'LICENSE_ERROR':
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
+            break;
     }
-}
-
+});
