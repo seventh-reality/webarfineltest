@@ -7,6 +7,7 @@ import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/l
 class OxExperience {
 
     _renderer = null;
+    _models = [];
     _scene = null;
     _camera = null;
     _model = null;
@@ -66,16 +67,19 @@ class OxExperience {
             }
         });
 
-        const gltfLoader = new GLTFLoader();
-        gltfLoader.load("range_rover.glb", (gltf) => {
-            this._model = gltf.scene;
-            this._model.traverse((child) => {
-                if (child.material) {
-                    console.log("updating material");
-                    child.material.envMap = this._envMap;
-                    child.material.needsUpdate = true;
-                }
-            });
+          const modelsToLoad = ["Steerad.glb", "Sterrad_PARTS.glb", "USAGE.glb", "USP_1.glb", "UPS_2.glb", "UPS_3.glb"];
+                    const gltfLoader = new GLTFLoader();
+                    modelsToLoad.forEach((modelUrl, index) => {
+                        gltfLoader.load(modelUrl, (gltf) => {
+                            try {
+                                const model = gltf.scene;
+
+                                model.traverse((child) => {
+                                    if (child.material) {
+                                        child.material.envMap = this._envMap;
+                                        child.material.needsUpdate = true;
+                                    }
+                                });
             this._model.scale.set(0.5, 0.5, 0.5);
             this._model.visible = false; // Initially hide the model
             this._scene.add(this._model);
