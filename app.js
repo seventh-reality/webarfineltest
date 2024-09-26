@@ -198,42 +198,49 @@ const oxExp = new OxExperience();
 const oxUI = new OxExperienceUI();
 
 oxUI.init();
-try {
-    await oxExp.init();
 
-    oxUI.onPlace(() => { 
-        oxExp.placeCar();
-        oxUI.showColors() 
-    })
+async function runExperience() {
+    try {
+        await oxExp.init();
+
+        oxUI.onPlace(() => { 
+            oxExp.placeCar();
+            oxUI.showColors(); 
+        });
     
-    oxExp.onHitTest(() => { 
-        if (!oxExp.isCarPlaced()) {
-            oxUI.showControls();
+        oxExp.onHitTest(() => { 
+            if (!oxExp.isCarPlaced()) {
+                oxUI.showControls();
+            }
+        });
+
+        oxUI.onRotationChange((value) => { oxExp.rotateCar(value); });
+        oxUI.onScaleChange((value) => { oxExp.scaleCar(value); });
+
+        oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
+        oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
+        oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
+        oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
+    
+        oxUI.hideLoadingScreen();
+
+    } catch (error) {
+        switch (error.name) {
+            case 'INTERNAL_ERROR':
+                oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
+                break;
+            case 'CAMERA_ERROR':
+                oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please, ensure you have given the required permissions from your browser settings.');
+                break;
+            case 'SENSORS_ERROR':
+                oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please, ensure you have given the required permissions from your browser settings.');
+                break;
+            case 'LICENSE_ERROR':
+                oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
+                break;
         }
-    });
-
-    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) })
-    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) })
-
-    oxUI.onBlack(() => oxExp.changeCarColor(0x111111))
-    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff))
-    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600))
-    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff))
-    
-    oxUI.hideLoadingScreen();
-
-} catch (error) {
-    switch (error.name) {
-        case 'INTERNAL_ERROR':
-            oxUI.showError('Internal Error', 'An unespecified error has occurred. Your device might not be compatible with this experience.');
-            break;
-        case 'CAMERA_ERROR':
-            oxUI.showError('Camera Error', 'Could not access to your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'SENSORS_ERROR':
-            oxUI.showError('Sensors Error', 'Could not access to your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'LICENSE_ERROR':
-            oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
     }
 }
+
+// Run the experience after initializing everything
+runExperience();
