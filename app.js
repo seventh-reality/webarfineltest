@@ -53,8 +53,8 @@ class OxExperience {
 
         // Load models
         gltfLoader.load("range_rover.glb", (gltf) => this.loadModel(gltf));
-        gltfLoader.load("car_2.glb", (gltf) => this.loadModel(gltf));
-        gltfLoader.load("car_3.glb", (gltf) => this.loadModel(gltf));
+        gltfLoader.load("UPS_2.glb", (gltf) => this.loadModel(gltf));
+        gltfLoader.load("UPS_3.glb", (gltf) => this.loadModel(gltf));
     }
 
     loadModel(gltf) {
