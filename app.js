@@ -12,7 +12,8 @@ class OxExperience {
     _model = null;
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
-    _modelPlaced = false; // Model will be placed after click
+    _modelPlaced = false;
+    _carPlaced = false;// Model will be placed after click
 
     async init() {
         this._raycaster = new THREE.Raycaster();
