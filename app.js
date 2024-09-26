@@ -119,17 +119,19 @@ class OxExperience {
             }
 
             async initSDK() {
-                try {
-                    this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
-                    const config = {
-                        mode: OnirixSDK.TrackingMode.Surface,
-                    };
-                    return this.oxSDK.init(config);
-                } catch (err) {
-                    console.error("Error initializing Onirix SDK", err);
-                    throw err;
-                }
-            }
+        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
+        const config = {
+            mode: OnirixSDK.TrackingMode.Surface,
+        };
+        return this.oxSDK.init(config);
+    }
+
+    placeCar() {
+        this._carPlaced = true;
+        this._model.visible = true; // Show the model when car is placed
+        this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
+        this.oxSDK.start();
+    }
 		  createSurfacePlaceholder() {
 				const geometry = new THREE.PlaneGeometry(1, 1); // Adjust size as needed
 				const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 }); // Green color with some transparency
@@ -175,10 +177,7 @@ class OxExperience {
 				}
 			}
 
-            placeCar() {
-                this._carPlaced = true;
-                this.oxSDK.start();
-            }
+           
 
             isCarPlaced() {
                 return this._carPlaced;
