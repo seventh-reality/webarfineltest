@@ -10,6 +10,7 @@ class OxExperience {
     _scene = null;
     _camera = null;
     _model = null;
+    _surfacePlaceholder = null; // Surface placeholder reference
 
     oxSDK;
 
@@ -22,37 +23,22 @@ class OxExperience {
         const renderCanvas = await this.initSDK();
         this.setupRenderer(renderCanvas);
 
-        // Load env map
-        const textureLoader = new THREE.TextureLoader();
-        this._envMap = textureLoader.load("envmap.jpg");
-        this._envMap.mapping = THREE.EquirectangularReflectionMapping;
-        this._envMap.encoding = THREE.sRGBEncoding;
+        // Create and add the surface placeholder
+        this.createSurfacePlaceholder();
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
             const delta = this._clock.getDelta();
-
-            this._animationMixers.forEach((mixer) => {
-                mixer.update(delta);
-            });
-
+            this._animationMixers.forEach((mixer) => mixer.update(delta));
             this.render();
-        })
-
-        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
-            this.render();
-        })
-
-        this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
-            this.updatePose(pose);
-        });
-
-        this.oxSDK.subscribe(OnirixSDK.Events.OnResize, () => {
-            this.onResize();
         });
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
-            if (this._modelPlaced && !this.isCarPlaced()) {
-                this._model.position.copy(hitResult.position);
+            if (!this._carPlaced) {
+                // Move the placeholder to the detected surface position
+                this._surfacePlaceholder.position.copy(hitResult.position);
+                this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
+            } else {
+                this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
             }
         });
 
@@ -61,7 +47,6 @@ class OxExperience {
             this._model = gltf.scene;
             this._model.traverse((child) => {
                 if (child.material) {
-                    console.log("updating material");
                     child.material.envMap = this._envMap;
                     child.material.needsUpdate = true;
                 }
@@ -82,40 +67,17 @@ class OxExperience {
 
     placeCar() {
         this._carPlaced = true;
+        this._surfacePlaceholder.visible = false; // Hide the placeholder after placement
         this.oxSDK.start();
     }
 
-    isCarPlaced() {
-        return this._carPlaced;
-    }
-
-    onHitTest(listener) {
-        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, listener);
-    }
-
-    setupRenderer(renderCanvas) {
-        const width = renderCanvas.width;
-        const height = renderCanvas.height;
-
-        // Initialize renderer with renderCanvas provided by Onirix SDK
-        this._renderer = new THREE.WebGLRenderer({ canvas: renderCanvas, alpha: true });
-        this._renderer.setClearColor(0x000000, 0);
-        this._renderer.setSize(width, height);
-        this._renderer.outputEncoding = THREE.sRGBEncoding;
-
-        // Ask Onirix SDK for camera parameters to create a 3D camera that fits with the AR projection.
-        const cameraParams = this.oxSDK.getCameraParameters();
-        this._camera = new THREE.PerspectiveCamera(cameraParams.fov, cameraParams.aspect, 0.1, 1000);
-        this._camera.matrixAutoUpdate = false;
-
-        // Create an empty scene
-        this._scene = new THREE.Scene();
-
-        // Add some lights
-        const ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
-        this._scene.add(ambientLight);
-        const hemisphereLight = new THREE.HemisphereLight(0xbbbbff, 0x444422);
-        this._scene.add(hemisphereLight);
+    createSurfacePlaceholder() {
+        const geometry = new THREE.RingGeometry(0.1, 0.2, 32);
+        const material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+        const ring = new THREE.Mesh(geometry, material);
+        ring.rotation.x = -Math.PI / 2; // Rotate to lie flat on the ground
+        this._scene.add(ring);
+        this._surfacePlaceholder = ring;
     }
 
     render() {
@@ -123,7 +85,6 @@ class OxExperience {
     }
 
     updatePose(pose) {
-        // When a new pose is detected, update the 3D camera
         let modelViewMatrix = new THREE.Matrix4();
         modelViewMatrix = modelViewMatrix.fromArray(pose);
         this._camera.matrix = modelViewMatrix;
@@ -131,7 +92,6 @@ class OxExperience {
     }
 
     onResize() {
-        // When device orientation changes, it is required to update camera params.
         const width = this._renderer.domElement.width;
         const height = this._renderer.domElement.height;
         const cameraParams = this.oxSDK.getCameraParameters();
@@ -140,6 +100,7 @@ class OxExperience {
         this._camera.updateProjectionMatrix();
         this._renderer.setSize(width, height);
     }
+}
 
     scaleCar(value) {
         this._model.scale.set(value, value, value);
