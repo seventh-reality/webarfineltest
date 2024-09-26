@@ -9,16 +9,15 @@ class OxExperience {
     _renderer = null;
     _scene = null;
     _camera = null;
-    _model = null;
+    _model = null; // Only one model will be loaded
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
-    _modelPlaced = false; // Model will be placed after click
+    _carPlaced = false; // Flag to check if the car is placed
 
     async init() {
         this._raycaster = new THREE.Raycaster();
         this._animationMixers = [];
         this._clock = new THREE.Clock(true);
-        this._carPlaced = false;
 
         const renderCanvas = await this.initSDK();
         this.setupRenderer(renderCanvas);
@@ -42,10 +41,6 @@ class OxExperience {
             this.render();
         });
 
-        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
-            this.render();
-        });
-
         this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
             this.updatePose(pose);
         });
@@ -65,6 +60,7 @@ class OxExperience {
             }
         });
 
+        // Load only one GLB model
         const gltfLoader = new GLTFLoader();
         gltfLoader.load("range_rover.glb", (gltf) => {
             this._model = gltf.scene;
@@ -82,7 +78,7 @@ class OxExperience {
     }
 
     async initSDK() {
-        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
+        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
         const config = {
             mode: OnirixSDK.TrackingMode.Surface,
         };
@@ -90,10 +86,14 @@ class OxExperience {
     }
 
     placeCar() {
-        this._carPlaced = true;
-        this._model.visible = true; // Show the model when car is placed
-        this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
-        this.oxSDK.start();
+        // Only place the car if it hasn't been placed yet
+        if (!this._carPlaced) {
+            this._carPlaced = true;
+            this._model.visible = true; // Show the model when car is placed
+            this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
+            this.oxSDK.start();
+            this._surfacePlaceholder.visible = false; // Hide the placeholder
+        }
     }
 
     createSurfacePlaceholder() {
@@ -101,7 +101,6 @@ class OxExperience {
         const material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
         const ring = new THREE.Mesh(geometry, material);
         ring.rotation.x = -Math.PI / 2; // Rotate to lie flat on the ground
-        ring.userData.isPlaceholder = true; // Add a flag for detecting click
         this._scene.add(ring);
         this._surfacePlaceholder = ring;
     }
@@ -183,15 +182,10 @@ class OxExperienceUI {
 
     _loadingScreen = null;
     _errorScreen = null;
-    _moveAnimation = null;
-    _errorTitle = null;
-    _errorMessage = null;
 
     init() {
         this._loadingScreen = document.querySelector("#loading-screen");
         this._errorScreen = document.querySelector("#error-screen");
-        this._errorTitle = document.querySelector("#error-title");
-        this._errorMessage = document.querySelector("#error-message");
 
         this._transformControls = document.querySelector("#transform-controls");
         this._colorControls = document.querySelector("#color-controls");
@@ -261,7 +255,7 @@ try {
 
     oxUI.onPlace(() => { 
         oxExp.placeCar();
-        oxUI.showColors() 
+        oxUI.showColors();
     });
 
     oxExp.onHitTest(() => { 
