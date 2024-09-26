@@ -312,6 +312,11 @@ try {
         }
     });
 
+    // Model switching
+    oxUI.onModel1Click(() => oxExp.switchModel(0));
+    oxUI.onModel2Click(() => oxExp.switchModel(1));
+    oxUI.onModel3Click(() => oxExp.switchModel(2));
+
     oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
     oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
 
@@ -337,3 +342,4 @@ try {
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
     }
 }
+
