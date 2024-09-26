@@ -10,9 +10,9 @@ class OxExperience {
     _scene = null;
     _camera = null;
     _model = null;
-     _surfacePlaceholder = null; // Surface placeholder reference
-
+    _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
+    _modelPlaced = false; // Model will be placed after click
 
     async init() {
         this._raycaster = new THREE.Raycaster();
@@ -28,6 +28,7 @@ class OxExperience {
         this._envMap = textureLoader.load("envmap.jpg");
         this._envMap.mapping = THREE.EquirectangularReflectionMapping;
         this._envMap.encoding = THREE.sRGBEncoding;
+
         // Create and add the surface placeholder
         this.createSurfacePlaceholder();
 
@@ -39,11 +40,11 @@ class OxExperience {
             });
 
             this.render();
-        })
+        });
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
             this.render();
-        })
+        });
 
         this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
             this.updatePose(pose);
@@ -52,19 +53,15 @@ class OxExperience {
         this.oxSDK.subscribe(OnirixSDK.Events.OnResize, () => {
             this.onResize();
         });
-         this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
+
+        // Detect surface and move the placeholder there
+        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
             if (!this._carPlaced) {
                 // Move the placeholder to the detected surface position
                 this._surfacePlaceholder.position.copy(hitResult.position);
                 this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
             } else {
                 this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
-            }
-        });
-
-        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
-            if (this._modelPlaced && !this.isCarPlaced()) {
-                this._model.position.copy(hitResult.position);
             }
         });
 
@@ -79,28 +76,32 @@ class OxExperience {
                 }
             });
             this._model.scale.set(0.5, 0.5, 0.5);
+            this._model.visible = false; // Initially hide the model
             this._scene.add(this._model);
-            this._modelPlaced = true;
         });
     }
 
     async initSDK() {
-        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
+        this.oxSDK = new OnirixSDK("YOUR_LICENSE_KEY");
         const config = {
             mode: OnirixSDK.TrackingMode.Surface,
-        }
+        };
         return this.oxSDK.init(config);
     }
 
     placeCar() {
         this._carPlaced = true;
+        this._model.visible = true; // Show the model when car is placed
+        this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
         this.oxSDK.start();
     }
+
     createSurfacePlaceholder() {
         const geometry = new THREE.RingGeometry(0.1, 0.2, 32);
         const material = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide });
         const ring = new THREE.Mesh(geometry, material);
         ring.rotation.x = -Math.PI / 2; // Rotate to lie flat on the ground
+        ring.userData.isPlaceholder = true; // Add a flag for detecting click
         this._scene.add(ring);
         this._surfacePlaceholder = ring;
     }
@@ -178,7 +179,6 @@ class OxExperience {
     }
 }
 
-
 class OxExperienceUI {
 
     _loadingScreen = null;
@@ -250,7 +250,6 @@ class OxExperienceUI {
         this._errorMessage.innerText = errorMessage;
         this._errorScreen.style.display = 'flex';
     }
-
 }
 
 const oxExp = new OxExperience();
@@ -263,34 +262,34 @@ try {
     oxUI.onPlace(() => { 
         oxExp.placeCar();
         oxUI.showColors() 
-    })
-    
+    });
+
     oxExp.onHitTest(() => { 
         if (!oxExp.isCarPlaced()) {
             oxUI.showControls();
         }
     });
 
-    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) })
-    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) })
+    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
+    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
 
-    oxUI.onBlack(() => oxExp.changeCarColor(0x111111))
-    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff))
-    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600))
-    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff))
-    
+    oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
+    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
+    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
+    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
+
     oxUI.hideLoadingScreen();
 
 } catch (error) {
     switch (error.name) {
         case 'INTERNAL_ERROR':
-            oxUI.showError('Internal Error', 'An unespecified error has occurred. Your device might not be compatible with this experience.');
+            oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
             break;
         case 'CAMERA_ERROR':
-            oxUI.showError('Camera Error', 'Could not access to your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
+            oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
             break;
         case 'SENSORS_ERROR':
-            oxUI.showError('Sensors Error', 'Could not access to your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
+            oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
             break;
         case 'LICENSE_ERROR':
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
