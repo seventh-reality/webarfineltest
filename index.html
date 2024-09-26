@@ -1,154 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js GLB Viewer</title>
-    <style>
-        body { margin: 0; position: relative; }
-        canvas { display: block; }
-        button {
-            position: absolute;
-            bottom: 50px; /* Position from the bottom */
-            left: 50%; /* Center horizontally */
-            transform: translateX(-50%); /* Adjust position to center */
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <button id="openWebsite">View IN AR</button>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/examples/js/controls/OrbitControls.js"></script>
-
-    <script>
-        let scene, camera, renderer, model, controls;
-        let startDistance = 0;
-
-        function init() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-            // Enable anti-aliasing in the WebGLRenderer for smoother edges
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0x808080); // Set background color to gray
-            renderer.shadowMap.enabled = true; // Enable shadow rendering
-            document.body.appendChild(renderer.domElement);
-
-            // Realistic Lighting Setup
-
-            // Add hemisphere light for sky and ground lighting
-            const hemisphereLight = new THREE.HemisphereLight(0x4040ff, 0xffc080, 0.9); // Sky color, ground color, intensity
-            hemisphereLight.position.set(0, 20, 0); // Position it above the scene
-            scene.add(hemisphereLight);
-
-            // Add directional light (like sunlight)
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Intensity of the light
-            directionalLight.position.set(10, 10, 10); // Position it
-            directionalLight.castShadow = true; // Enable shadows
-            directionalLight.shadow.mapSize.width = 1024; // Shadow map resolution
-            directionalLight.shadow.mapSize.height = 1024;
-            directionalLight.shadow.camera.near = 0.1; // Near clipping plane
-            directionalLight.shadow.camera.far = 50; // Far clipping plane
-            scene.add(directionalLight);
-
-            // Add point light for additional illumination
-            const pointLight = new THREE.PointLight(0xfff0f0, 1, 100); // Warm light, intensity, and distance
-            pointLight.position.set(-5, 5, 5);
-            pointLight.castShadow = true;
-            scene.add(pointLight);
-
-            // Load an environment map for realistic reflections
-            const cubeTextureLoader = new THREE.CubeTextureLoader();
-            const environmentMap = cubeTextureLoader.load([
-                'path_to_right.jpg',
-                'path_to_left.jpg',
-                'path_to_top.jpg',
-                'path_to_bottom.jpg',
-                'path_to_front.jpg',
-                'path_to_back.jpg'
-            ]);
-            scene.environment = environmentMap; // Set the environment map
-
-            // Load the GLTF model
-            const loader = new THREE.GLTFLoader();
-            loader.load('Steerad.glb', (gltf) => {
-                model = gltf.scene;
-                model.traverse(function (child) {
-                    if (child.isMesh) {
-                        child.castShadow = true; // Cast shadows on the model
-                        child.receiveShadow = true; // Allow model to receive shadows
-                    }
-                });
-                scene.add(model);
-                model.position.set(0, 0, 0);
-                model.scale.set(1, 1, 1);
-            });
-
-            camera.position.z = 5;
-
-            // Initialize OrbitControls
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.25;
-            controls.screenSpacePanning = false;
-
-            window.addEventListener('resize', onWindowResize, false);
-            document.addEventListener('touchstart', onTouchStart, false);
-            document.addEventListener('touchmove', onTouchMove, false);
-
-            // Button click event
-            document.getElementById('openWebsite').addEventListener('click', openWebsite);
-        }
-
-        function openWebsite() {
-            window.open('https://seventh-reality.github.io/Sterrad_Android_IOS/', '_blank'); // Replace with your URL
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function onTouchStart(event) {
-            if (event.touches.length === 2) {
-                startDistance = getDistance(event.touches[0], event.touches[1]);
-            }
-        }
-
-        function onTouchMove(event) {
-            if (event.touches.length === 2) {
-                const currentDistance = getDistance(event.touches[0], event.touches[1]);
-                const scaleFactor = currentDistance / startDistance;
-
-                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                startDistance = currentDistance;
-            }
-        }
-
-        function getDistance(touch1, touch2) {
-            const dx = touch1.clientX - touch2.clientX;
-            const dy = touch1.clientY - touch2.clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        init();
-        animate();
-    </script>
-</body>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+        <title>Onirix Web AR SDK - ThreeJS surface-tracking test</title>
+        <script async type="module" src="app.js"></script>
+        <link rel="stylesheet" href="app.css" />
+    </head>
+    <body>
+        <div id="loading-screen">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+        <div id="error-screen">
+            <span id="error-title"></span>
+            <span id="error-message"></span>
+        </div>
+        <div id="initializing"></div>
+        <div id="transform-controls">
+            <input id="rotation-slider" type="range" min="0" max="360" value="180">
+            <input id="scale-slider" type="range" min="10" max="100" value="50">
+            <button id="tap-to-place">Tap to place</button>
+        </div>
+        <div id="color-controls">
+            <span id="black"></span>
+            <span id="orange"></span>
+            <span id="blue"></span>
+            <span id="silver"></span>
+        </div>
+    </body>
 </html>
