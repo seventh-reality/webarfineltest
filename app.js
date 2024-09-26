@@ -100,7 +100,7 @@ class OxExperience {
         this._camera.updateProjectionMatrix();
         this._renderer.setSize(width, height);
     }
-}
+
 
     scaleCar(value) {
         this._model.scale.set(value, value, value);
