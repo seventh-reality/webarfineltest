@@ -179,6 +179,29 @@ class OxExperience {
         });
     }
 }
+class OxExperience {
+    // ...other properties and methods
+
+    scaleScene(value) {
+        this._scene.scale.set(10, 10, 10); // Apply scale to the entire scene
+    }
+
+    // ...other methods
+}
+
+class OxExperienceUI {
+    // ... UI-related properties and methods
+
+    onScaleChange(listener) {
+        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
+    }
+
+    // ...other methods
+}
+
+// Inside the initialization logic
+oxUI.onScaleChange((value) => { oxExp.scaleScene(value); }); // Listen for scene scale changes
+
 
 class OxExperienceUI {
 
