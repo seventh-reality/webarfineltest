@@ -1,5 +1,4 @@
 // ====== Imports ======
-
 import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
@@ -9,11 +8,12 @@ class OxExperience {
     _renderer = null;
     _scene = null;
     _camera = null;
-    _model = null;
+    _models = {};  // Store all models here
+    _currentModel = null;  // Reference to the currently visible model
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
     _modelPlaced = false;
-    _carPlaced = false;// Model will be placed after click
+    _carPlaced = false; // Model will be placed after click
 
     async init() {
         this._raycaster = new THREE.Raycaster();
@@ -43,10 +43,6 @@ class OxExperience {
             this.render();
         });
 
-        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
-            this.render();
-        });
-
         this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
             this.updatePose(pose);
         });
@@ -66,35 +62,51 @@ class OxExperience {
             }
         });
 
+        // Load multiple models
+        const modelsToLoad = ["Steerad.glb", "Sterrad_PARTS.glb", "USAGE.glb", "USP_1.glb", "UPS_2.glb", "UPS_3.glb"];
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load("range_rover.glb", (gltf) => {
-            this._model = gltf.scene;
-            this._model.traverse((child) => {
-                if (child.material) {
-                    console.log("updating material");
-                    child.material.envMap = this._envMap;
-                    child.material.needsUpdate = true;
-                }
+
+        for (const modelName of modelsToLoad) {
+            gltfLoader.load(modelName, (gltf) => {
+                const model = gltf.scene;
+                model.traverse((child) => {
+                    if (child.material) {
+                        child.material.envMap = this._envMap;
+                        child.material.needsUpdate = true;
+                    }
+                });
+                model.scale.set(0.5, 0.5, 0.5);
+                model.visible = false; // Hide the model initially
+                this._scene.add(model);
+                this._models[modelName] = model; // Add to models object
             });
-            this._model.scale.set(0.5, 0.5, 0.5);
-            this._model.visible = false; // Initially hide the model
-            this._scene.add(this._model);
-        });
+        }
     }
 
     async initSDK() {
-        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
+        this.oxSDK = new OnirixSDK("your-token-here");
         const config = {
             mode: OnirixSDK.TrackingMode.Surface,
         };
         return this.oxSDK.init(config);
     }
 
-    placeCar() {
+    placeModel() {
         this._carPlaced = true;
-        this._model.visible = true; // Show the model when car is placed
-        this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
-        this.oxSDK.start();
+        if (this._currentModel) {
+            this._currentModel.visible = true; // Show the current model when placed
+            this._currentModel.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
+            this.oxSDK.start();
+        }
+    }
+
+    switchModel(modelName) {
+        if (this._currentModel) {
+            this._currentModel.visible = false; // Hide current model
+        }
+
+        this._currentModel = this._models[modelName]; // Switch to new model
+        this._currentModel.visible = this._carPlaced; // Show the model if already placed
     }
 
     createSurfacePlaceholder() {
@@ -107,7 +119,7 @@ class OxExperience {
         this._surfacePlaceholder = ring;
     }
 
-    isCarPlaced() {
+    isModelPlaced() {
         return this._carPlaced;
     }
 
@@ -162,84 +174,27 @@ class OxExperience {
         this._camera.updateProjectionMatrix();
         this._renderer.setSize(width, height);
     }
-
-    scaleCar(value) {
-        this._model.scale.set(value, value, value);
-    }
-
-    rotateCar(value) {
-        this._model.rotation.y = value;
-    }
-
-    changeCarColor(value) {
-        this._model.traverse((child) => {
-            if (child.material && child.material.name === "CarPaint") {
-                child.material.color.setHex(value);
-            }
-        });
-    }
 }
 
 class OxExperienceUI {
 
-    _loadingScreen = null;
-    _errorScreen = null;
-    _moveAnimation = null;
-    _errorTitle = null;
-    _errorMessage = null;
-
     init() {
         this._loadingScreen = document.querySelector("#loading-screen");
         this._errorScreen = document.querySelector("#error-screen");
-        this._errorTitle = document.querySelector("#error-title");
-        this._errorMessage = document.querySelector("#error-message");
 
-        this._transformControls = document.querySelector("#transform-controls");
-        this._colorControls = document.querySelector("#color-controls");
-        this._placeButton = document.querySelector("#tap-to-place");
-        this._scaleSlider = document.querySelector("#scale-slider");
-        this._rotationSlider = document.querySelector("#rotation-slider");
-        this._black = document.querySelector("#black");
-        this._orange = document.querySelector("#orange");
-        this._blue = document.querySelector("#blue");
-        this._silver = document.querySelector("#silver");
+        // Model selection buttons
+        this._buttons = {
+            steerad: document.querySelector("#btn-steerad"),
+            sterradParts: document.querySelector("#btn-sterrad-parts"),
+            usage: document.querySelector("#btn-usage"),
+            usp1: document.querySelector("#btn-usp1"),
+            ups2: document.querySelector("#btn-ups2"),
+            ups3: document.querySelector("#btn-ups3"),
+        };
     }
 
-    showControls() {
-        this._transformControls.style.display = "block";
-    }
-
-    showColors() {
-        this._transformControls.style.display = "none";
-        this._colorControls.style.display = "block";
-    }
-
-    onPlace(listener) {
-        this._placeButton.addEventListener('click', listener);
-    }
-
-    onScaleChange(listener) {
-        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
-    }
-
-    onRotationChange(listener) {
-        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
-    }
-
-    onBlack(listener) {
-        this._black.addEventListener('click', listener);
-    }
-
-    onOrange(listener) {
-        this._orange.addEventListener('click', listener);
-    }
-
-    onBlue(listener) {
-        this._blue.addEventListener('click', listener);
-    }
-
-    onSilver(listener) {
-        this._silver.addEventListener('click', listener);
+    onModelSwitch(modelName, listener) {
+        this._buttons[modelName].addEventListener('click', listener);
     }
 
     hideLoadingScreen() {
@@ -247,9 +202,8 @@ class OxExperienceUI {
     }
 
     showError(errorTitle, errorMessage) {
-        this._errorTitle.innerText = errorTitle;
-        this._errorMessage.innerText = errorMessage;
         this._errorScreen.style.display = 'flex';
+        // Set error message
     }
 }
 
@@ -260,39 +214,15 @@ oxUI.init();
 try {
     await oxExp.init();
 
-    oxUI.onPlace(() => { 
-        oxExp.placeCar();
-        oxUI.showColors() 
-    });
-
-    oxExp.onHitTest(() => { 
-        if (!oxExp.isCarPlaced()) {
-            oxUI.showControls();
-        }
-    });
-
-    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
-    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
-
-    oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
-    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
-    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
-    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
+    oxUI.onModelSwitch('steerad', () => oxExp.switchModel('Steerad.glb'));
+    oxUI.onModelSwitch('sterradParts', () => oxExp.switchModel('Sterrad_PARTS.glb'));
+    oxUI.onModelSwitch('usage', () => oxExp.switchModel('USAGE.glb'));
+    oxUI.onModelSwitch('usp1', () => oxExp.switchModel('USP_1.glb'));
+    oxUI.onModelSwitch('ups2', () => oxExp.switchModel('UPS_2.glb'));
+    oxUI.onModelSwitch('ups3', () => oxExp.switchModel('UPS_3.glb'));
 
     oxUI.hideLoadingScreen();
 
 } catch (error) {
-    switch (error.name) {
-        case 'INTERNAL_ERROR':
-            oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
-            break;
-        case 'CAMERA_ERROR':
-            oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'SENSORS_ERROR':
-            oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'LICENSE_ERROR':
-            oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
-    }
+    console.error(error);
 }
