@@ -162,6 +162,9 @@ class OxExperience {
         this._camera.updateProjectionMatrix();
         this._renderer.setSize(width, height);
     }
+    scaleScene(value) {
+        this._scene.scale.set(1, 1, 1); // Apply scale to the entire scene
+    }
 
     scaleCar(value) {
         this._model.scale.set(value, value, value);
@@ -179,30 +182,6 @@ class OxExperience {
         });
     }
 }
-class OxExperience {
-    // ...other properties and methods
-
-    scaleScene(value) {
-        this._scene.scale.set(10, 10, 10); // Apply scale to the entire scene
-    }
-
-    // ...other methods
-}
-
-class OxExperienceUI {
-    // ... UI-related properties and methods
-
-    onScaleChange(listener) {
-        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
-    }
-
-    // ...other methods
-}
-
-// Inside the initialization logic
-oxUI.onScaleChange((value) => { oxExp.scaleScene(value); }); // Listen for scene scale changes
-
-
 class OxExperienceUI {
 
     _loadingScreen = null;
@@ -227,7 +206,9 @@ class OxExperienceUI {
         this._blue = document.querySelector("#blue");
         this._silver = document.querySelector("#silver");
     }
-
+     onScaleChange(listener) {
+        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
+         }
     showControls() {
         this._transformControls.style.display = "block";
     }
@@ -295,6 +276,7 @@ try {
     });
 
     oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
+    oxUI.onScaleChange((value) => { oxExp.scaleScene(value); }); // Listen for scene scale changes
     oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
 
     oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
