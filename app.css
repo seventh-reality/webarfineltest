@@ -9,7 +9,7 @@ body {
 /* Loading screen */
 
 #loading-screen {
-    display: none;
+    display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
