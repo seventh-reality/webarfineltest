@@ -67,7 +67,7 @@ class OxExperience {
         });
 
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load("range_rover.glb", (gltf) => {
+        gltfLoader.load("Steerad.glb", (gltf) => {
             this._model = gltf.scene;
             this._model.traverse((child) => {
                 if (child.material) {
