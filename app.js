@@ -169,11 +169,11 @@ class OxExperience {
     }
 
     scaleCar(value) {
-        this._model.scale.set(value, value, value);
+        this._scene.scale.set(value, value, value);
     }
 
     rotateCar(value) {
-        this._model.rotation.y = value;
+        this._scene.rotation.y = value;
     }
 
     changeCarColor(value) {
@@ -204,12 +204,12 @@ class OxExperience {
                 const newDistance = this.getDistance(event.touches);
                 const scale = newDistance / this._lastPinchDistance;
                 this._lastPinchDistance = newDistance;
-                this.scaleCar(this._model.scale.x * scale); // Adjust scale
+                this.scaleCar(this._scene.scale.x * scale); // Adjust scale
             } else if (event.touches.length === 1 && this._lastTouchX !== null) {
                 // Single finger rotation move
                 const deltaX = event.touches[0].clientX - this._lastTouchX;
                 this._lastTouchX = event.touches[0].clientX;
-                this.rotateCar(this._model.rotation.y + deltaX * 0.01); // Adjust rotation
+                this.rotateCar(this._scene.rotation.y + deltaX * 0.01); // Adjust rotation
             }
         });
 
