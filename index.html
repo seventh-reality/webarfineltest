@@ -1,151 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web AR with Onirix and Three.js</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-        }
-        #loading-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 24px;
-            z-index: 10;
-        }
-        #transform-controls, #color-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-        }
-        #scale-slider, #rotation-slider {
-            width: 200px;
-        }
-    </style>
-</head>
-<body>
-
-<div id="loading-screen">Loading...</div>
-
-<!-- Transform Controls -->
-<div id="transform-controls">
-    <input id="scale-slider" type="range" min="50" max="200" value="100"> Scale
-    <input id="rotation-slider" type="range" min="0" max="360" value="0"> Rotation
-</div>
-
-<!-- Color Controls -->
-<div id="color-controls">
-    <button id="black">Black</button>
-    <button id="orange">Orange</button>
-    <button id="blue">Blue</button>
-    <button id="silver">Silver</button>
-</div>
-
-<!-- Canvas for rendering -->
-<canvas id="canvas"></canvas>
-
-<!-- Script imports (using type="module" to load ES6 modules) -->
-<script type="module">
-    import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
-    import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
-    import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
-    import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js";
-
-    class OxExperience {
-        async init() {
-            // Initialize Onirix SDK
-            this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
-            const renderCanvas = await this.initSDK();
-            this.setupRenderer(renderCanvas);
-
-            // Add basic lighting
-            const ambientLight = new THREE.AmbientLight(0xcccccc, 0.5);
-            this._scene.add(ambientLight);
-
-            // Load 3D model
-            this.loadModel();
-
-            // Add OrbitControls
-            this.addOrbitControls();
-
-            this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
-                this.render();
-            });
-
-            // Handle hit test results for surface tracking
-            this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
-                if (!this._modelPlaced) {
-                    this.placeModel(hitResult.position);
-                }
-            });
-        }
-
-        async initSDK() {
-            const config = {
-                mode: OnirixSDK.TrackingMode.Surface,
-            };
-            return this.oxSDK.init(config);
-        }
-
-        setupRenderer(renderCanvas) {
-            this._renderer = new THREE.WebGLRenderer({ canvas: renderCanvas, alpha: true });
-            this._renderer.setSize(window.innerWidth, window.innerHeight);
-            this._scene = new THREE.Scene();
-
-            const cameraParams = this.oxSDK.getCameraParameters();
-            this._camera = new THREE.PerspectiveCamera(cameraParams.fov, cameraParams.aspect, 0.1, 1000);
-            this._camera.matrixAutoUpdate = false;
-        }
-
-        loadModel() {
-            const gltfLoader = new GLTFLoader();
-            gltfLoader.load("Steerad.glb", (gltf) => {
-                this._model = gltf.scene;
-                this._model.scale.set(0.5, 0.5, 0.5);
-                this._model.visible = false; // Hide initially
-                this._scene.add(this._model);
-            });
-        }
-
-        placeModel(position) {
-            this._model.position.copy(position);
-            this._model.visible = true;
-            this._modelPlaced = true;
-        }
-
-        addOrbitControls() {
-            const controls = new OrbitControls(this._camera, this._renderer.domElement);
-            controls.enableZoom = true;
-            controls.enableRotate = true;
-            controls.enablePan = false;
-        }
-
-        render() {
-            this._renderer.render(this._scene, this._camera);
-        }
-    }
-
-    // Initialize experience
-    const oxExp = new OxExperience();
-    await oxExp.init();
-</script>
-
-</body>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+        <title>Onirix Web AR SDK - ThreeJS surface-tracking test</title>
+        <script async type="module" src="app.js"></script>
+        <link rel="stylesheet" href="app.css" />
+    </head>
+    <body>
+        <div id="loading-screen">
+            <div class="bounce1"></div>
+            <div class="bounce2"></div>
+            <div class="bounce3"></div>
+        </div>
+        <div id="error-screen">
+            <span id="error-title"></span>
+            <span id="error-message"></span>
+        </div>
+        <div id="initializing"></div>
+        <div id="transform-controls">
+            <input id="rotation-slider" type="range" min="0" max="360" value="180">
+            <input id="scale-slider" type="range" min="10" max="100" value="50">
+            <button id="tap-to-place">Tap to place</button>
+        </div>
+        <div id="color-controls">
+            <span id="black"></span>
+            <span id="orange"></span>
+            <span id="blue"></span>
+            <span id="silver"></span>
+        </div>
+    </body>
 </html>
