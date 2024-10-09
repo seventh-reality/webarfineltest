@@ -201,7 +201,7 @@ class OxExperienceUI {
     _errorTitle = null;
     _errorMessage = null;
 
-    init() {
+   init() {
         this._loadingScreen = document.querySelector("#loading-screen");
         this._errorScreen = document.querySelector("#error-screen");
         this._errorTitle = document.querySelector("#error-title");
@@ -220,7 +220,6 @@ class OxExperienceUI {
 
     showControls() {
         this._transformControls.style.display = "block";
-        this._loadingScreen.style.display = "none";
     }
 
     showColors() {
@@ -228,24 +227,45 @@ class OxExperienceUI {
         this._colorControls.style.display = "block";
     }
 
-    hideLoading() {
-        this._loadingScreen.classList.add("hidden");
+    onPlace(listener) {
+        this._placeButton.addEventListener('click', listener);
     }
 
-    showLoading() {
-        this._loadingScreen.classList.remove("hidden");
+    onScaleChange(listener) {
+        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
     }
 
-    hideError() {
-        this._errorScreen.style.display = "none";
+    onRotationChange(listener) {
+        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
     }
 
-    showError(title, message) {
-        this._errorScreen.style.display = "flex";
-        this._errorTitle.innerHTML = title;
-        this._errorMessage.innerHTML = message;
+    onBlack(listener) {
+        this._black.addEventListener('click', listener);
+    }
+
+    onOrange(listener) {
+        this._orange.addEventListener('click', listener);
+    }
+
+    onBlue(listener) {
+        this._blue.addEventListener('click', listener);
+    }
+
+    onSilver(listener) {
+        this._silver.addEventListener('click', listener);
+    }
+
+    hideLoadingScreen() {
+        this._loadingScreen.style.display = 'none';
+    }
+
+    showError(errorTitle, errorMessage) {
+        this._errorTitle.innerText = errorTitle;
+        this._errorMessage.innerText = errorMessage;
+        this._errorScreen.style.display = 'flex';
     }
 }
+
 
 // Create experience
 const oxExperience = new OxExperience();
