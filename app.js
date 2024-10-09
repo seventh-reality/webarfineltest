@@ -220,6 +220,7 @@ class OxExperienceUI {
 
     showControls() {
         this._transformControls.style.display = "block";
+        this._loadingScreen.style.display = "none";
     }
 
     showColors() {
