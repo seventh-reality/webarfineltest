@@ -3,6 +3,7 @@
 import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
+import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js"; // Import OrbitControls
 
 class OxExperience {
 
@@ -13,7 +14,8 @@ class OxExperience {
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
     _modelPlaced = false;
-    _carPlaced = false;// Model will be placed after click
+    _carPlaced = false; // Model will be placed after click
+    _controls = null; // OrbitControls reference
 
     async init() {
         this._raycaster = new THREE.Raycaster();
@@ -23,6 +25,7 @@ class OxExperience {
 
         const renderCanvas = await this.initSDK();
         this.setupRenderer(renderCanvas);
+        this.setupOrbitControls(); // Setup OrbitControls
 
         // Load env map
         const textureLoader = new THREE.TextureLoader();
@@ -140,7 +143,17 @@ class OxExperience {
         this._scene.add(hemisphereLight);
     }
 
+    setupOrbitControls() {
+        this._controls = new OrbitControls(this._camera, this._renderer.domElement);
+        this._controls.enableDamping = true; // Enable smooth rotation
+        this._controls.dampingFactor = 0.25;
+        this._controls.enableZoom = true; // Enable pinch-to-zoom
+        this._controls.enableRotate = true; // Enable rotation
+        this._controls.enablePan = false; // Disable panning (no need in AR)
+    }
+
     render() {
+        this._controls.update(); // Update controls on every frame
         this._renderer.render(this._scene, this._camera);
     }
 
@@ -214,85 +227,29 @@ class OxExperienceUI {
         this._colorControls.style.display = "block";
     }
 
-    onPlace(listener) {
-        this._placeButton.addEventListener('click', listener);
+    hideLoading() {
+        this._loadingScreen.classList.add("hidden");
     }
 
-    onScaleChange(listener) {
-        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
+    showLoading() {
+        this._loadingScreen.classList.remove("hidden");
     }
 
-    onRotationChange(listener) {
-        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
+    hideError() {
+        this._errorScreen.style.display = "none";
     }
 
-    onBlack(listener) {
-        this._black.addEventListener('click', listener);
-    }
-
-    onOrange(listener) {
-        this._orange.addEventListener('click', listener);
-    }
-
-    onBlue(listener) {
-        this._blue.addEventListener('click', listener);
-    }
-
-    onSilver(listener) {
-        this._silver.addEventListener('click', listener);
-    }
-
-    hideLoadingScreen() {
-        this._loadingScreen.style.display = 'none';
-    }
-
-    showError(errorTitle, errorMessage) {
-        this._errorTitle.innerText = errorTitle;
-        this._errorMessage.innerText = errorMessage;
-        this._errorScreen.style.display = 'flex';
+    showError(title, message) {
+        this._errorScreen.style.display = "flex";
+        this._errorTitle.innerHTML = title;
+        this._errorMessage.innerHTML = message;
     }
 }
 
-const oxExp = new OxExperience();
-const oxUI = new OxExperienceUI();
+// Create experience
+const oxExperience = new OxExperience();
+const oxExperienceUI = new OxExperienceUI();
 
-oxUI.init();
-try {
-    await oxExp.init();
-
-    oxUI.onPlace(() => { 
-        oxExp.placeCar();
-        oxUI.showColors() 
-    });
-
-    oxExp.onHitTest(() => { 
-        if (!oxExp.isCarPlaced()) {
-            oxUI.showControls();
-        }
-    });
-
-    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
-    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
-
-    oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
-    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
-    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
-    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
-
-    oxUI.hideLoadingScreen();
-
-} catch (error) {
-    switch (error.name) {
-        case 'INTERNAL_ERROR':
-            oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
-            break;
-        case 'CAMERA_ERROR':
-            oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'SENSORS_ERROR':
-            oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
-            break;
-        case 'LICENSE_ERROR':
-            oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
-    }
-}
+// Init experience
+oxExperience.init();
+oxExperienceUI.init();
