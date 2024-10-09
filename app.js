@@ -67,7 +67,7 @@ class OxExperience {
         });
 
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load("Steerad.glb", (gltf) => {
+        gltfLoader.load("range_rover.glb", (gltf) => {
             this._model = gltf.scene;
             this._model.traverse((child) => {
                 if (child.material) {
@@ -80,9 +80,6 @@ class OxExperience {
             this._model.visible = false; // Initially hide the model
             this._scene.add(this._model);
         });
-
-        // Add touch event listeners for pinch zoom and rotation
-        this.addTouchListeners();
     }
 
     async initSDK() {
@@ -166,6 +163,13 @@ class OxExperience {
         this._renderer.setSize(width, height);
     }
 
+    scaleCar(value) {
+        this._model.scale.set(value, value, value);
+    }
+
+    rotateCar(value) {
+        this._model.rotation.y = value;
+    }
 
     changeCarColor(value) {
         this._model.traverse((child) => {
@@ -290,5 +294,5 @@ try {
             break;
         case 'LICENSE_ERROR':
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
-    } 
+    }
 }
