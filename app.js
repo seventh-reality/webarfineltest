@@ -3,7 +3,6 @@
 import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
-import { OrbitControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js"; // Import OrbitControls
 
 class OxExperience {
 
@@ -14,8 +13,7 @@ class OxExperience {
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
     _modelPlaced = false;
-    _carPlaced = false; // Model will be placed after click
-    _controls = null; // OrbitControls reference
+    _carPlaced = false;// Model will be placed after click
 
     async init() {
         this._raycaster = new THREE.Raycaster();
@@ -25,7 +23,6 @@ class OxExperience {
 
         const renderCanvas = await this.initSDK();
         this.setupRenderer(renderCanvas);
-        this.setupOrbitControls(); // Setup OrbitControls
 
         // Load env map
         const textureLoader = new THREE.TextureLoader();
@@ -143,17 +140,7 @@ class OxExperience {
         this._scene.add(hemisphereLight);
     }
 
-    setupOrbitControls() {
-        this._controls = new OrbitControls(this._camera, this._renderer.domElement);
-        this._controls.enableDamping = true; // Enable smooth rotation
-        this._controls.dampingFactor = 0.25;
-        this._controls.enableZoom = true; // Enable pinch-to-zoom
-        this._controls.enableRotate = true; // Enable rotation
-        this._controls.enablePan = false; // Disable panning (no need in AR)
-    }
-
     render() {
-        this._controls.update(); // Update controls on every frame
         this._renderer.render(this._scene, this._camera);
     }
 
@@ -201,7 +188,7 @@ class OxExperienceUI {
     _errorTitle = null;
     _errorMessage = null;
 
-   init() {
+    init() {
         this._loadingScreen = document.querySelector("#loading-screen");
         this._errorScreen = document.querySelector("#error-screen");
         this._errorTitle = document.querySelector("#error-title");
@@ -266,10 +253,9 @@ class OxExperienceUI {
     }
 }
 
+const oxExp = new OxExperience();
+const oxUI = new OxExperienceUI();
 
-// Create experience
-const oxExperience = new OxExperience();
-const oxExperienceUI = new OxExperienceUI();
 oxUI.init();
 try {
     await oxExp.init();
@@ -310,7 +296,3 @@ try {
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
     }
 }
-
-// Init experience
-oxExperience.init();
-oxExperienceUI.init();
