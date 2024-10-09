@@ -24,6 +24,7 @@
 <body>
     <canvas id="canvas"></canvas>
     
+    <!-- Load the script as a module -->
     <script type="module">
         import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.6.5/dist/ox-sdk.esm.js";
         import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
@@ -214,14 +215,6 @@
                 this._camera.aspect = cameraParams.aspect;
                 this._camera.updateProjectionMatrix();
                 this._renderer.setSize(width, height);
-            }
-
-            changeCarColor(value) {
-                this._model.traverse((child) => {
-                    if (child.material && child.material.name === "CarPaint") {
-                        child.material.color.setHex(value);
-                    }
-                });
             }
         }
 
