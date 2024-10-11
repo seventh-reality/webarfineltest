@@ -1,3 +1,5 @@
+// ====== Imports ======
+
 import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.8.4/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
@@ -11,7 +13,7 @@ class OxExperience {
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
     _modelPlaced = false;
-    _carPlaced = false; // Model will be placed after click
+    _carPlaced = false;// Model will be placed after click
     _lastPinchDistance = null; // To track pinch zoom
     _lastTouchX = null; // To track single-finger rotation
 
@@ -40,6 +42,10 @@ class OxExperience {
                 mixer.update(delta);
             });
 
+            this.render();
+        });
+
+        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
             this.render();
         });
 
@@ -85,10 +91,6 @@ class OxExperience {
         this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
         const config = {
             mode: OnirixSDK.TrackingMode.Surface,
-            // Add additional configurations for iOS if needed
-            ios: {
-                enableImageTracking: false, // Disable image tracking for better surface detection
-            },
         };
         return this.oxSDK.init(config);
     }
@@ -185,7 +187,7 @@ class OxExperience {
     // Add touch listeners for pinch zoom and single-finger rotation
     addTouchListeners() {
         const canvas = this._renderer.domElement;
-
+        
         canvas.addEventListener('touchstart', (event) => {
             if (event.touches.length === 2) {
                 // Pinch zoom start
@@ -229,6 +231,7 @@ class OxExperienceUI {
 
     _loadingScreen = null;
     _errorScreen = null;
+    _moveAnimation = null;
     _errorTitle = null;
     _errorMessage = null;
 
@@ -304,12 +307,12 @@ oxUI.init();
 try {
     await oxExp.init();
 
-    oxUI.onPlace(() => {
+    oxUI.onPlace(() => { 
         oxExp.placeCar();
-        oxUI.showColors();
+        oxUI.showColors() 
     });
 
-    oxExp.onHitTest(() => {
+    oxExp.onHitTest(() => { 
         if (!oxExp.isCarPlaced()) {
             oxUI.showControls();
         }
@@ -338,5 +341,5 @@ try {
             break;
         case 'LICENSE_ERROR':
             oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
-    }
+    } 
 }
