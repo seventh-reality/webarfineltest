@@ -1,10 +1,11 @@
 // ====== Imports ======
 
-import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.8.5/dist/ox-sdk.esm.js";
+import OnirixSDK from "https://unpkg.com/@onirix/ar-engine-sdk@1.8.4/dist/ox-sdk.esm.js";
 import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
 import { GLTFLoader } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js";
 
 class OxExperience {
+
     _renderer = null;
     _scene = null;
     _camera = null;
@@ -12,100 +13,91 @@ class OxExperience {
     _surfacePlaceholder = null; // Surface placeholder reference
     oxSDK;
     _modelPlaced = false;
-    _carPlaced = false; // Model will be placed after click
+    _carPlaced = false;// Model will be placed after click
     _lastPinchDistance = null; // To track pinch zoom
     _lastTouchX = null; // To track single-finger rotation
 
     async init() {
-        try {
-            this._raycaster = new THREE.Raycaster();
-            this._animationMixers = [];
-            this._clock = new THREE.Clock(true);
-            this._carPlaced = false;
+        this._raycaster = new THREE.Raycaster();
+        this._animationMixers = [];
+        this._clock = new THREE.Clock(true);
+        this._carPlaced = false;
 
-            const renderCanvas = await this.initSDK();
-            this.setupRenderer(renderCanvas);
+        const renderCanvas = await this.initSDK();
+        this.setupRenderer(renderCanvas);
 
-            // Load env map
-            const textureLoader = new THREE.TextureLoader();
-            this._envMap = textureLoader.load("envmap.jpg", () => {
-                console.log("Environment map loaded successfully.");
-            }, undefined, (err) => {
-                console.error("Error loading environment map:", err);
-            });
-            this._envMap.mapping = THREE.EquirectangularReflectionMapping;
-            this._envMap.encoding = THREE.sRGBEncoding;
+        // Load env map
+        const textureLoader = new THREE.TextureLoader();
+        this._envMap = textureLoader.load("envmap.jpg");
+        this._envMap.mapping = THREE.EquirectangularReflectionMapping;
+        this._envMap.encoding = THREE.sRGBEncoding;
 
-            // Create and add the surface placeholder
-            this.createSurfacePlaceholder();
+        // Create and add the surface placeholder
+        this.createSurfacePlaceholder();
 
-            this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
-                const delta = this._clock.getDelta();
-                this._animationMixers.forEach((mixer) => {
-                    mixer.update(delta);
-                });
-                this.render();
+        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
+            const delta = this._clock.getDelta();
+
+            this._animationMixers.forEach((mixer) => {
+                mixer.update(delta);
             });
 
-            this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
-                this.updatePose(pose);
-            });
+            this.render();
+        });
 
-            this.oxSDK.subscribe(OnirixSDK.Events.OnResize, () => {
-                this.onResize();
-            });
+        this.oxSDK.subscribe(OnirixSDK.Events.OnFrame, () => {
+            this.render();
+        });
 
-            // Detect surface and move the placeholder there
-            this.oxSDK.subscribe(OnirixSDK.Events.OnWorldTrackingResult, (trackingResult) => {
-                if (!this._carPlaced) {
-                    this._surfacePlaceholder.position.copy(trackingResult.position);
-                    this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
-                } else {
-                    this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
+        this.oxSDK.subscribe(OnirixSDK.Events.OnPose, (pose) => {
+            this.updatePose(pose);
+        });
+
+        this.oxSDK.subscribe(OnirixSDK.Events.OnResize, () => {
+            this.onResize();
+        });
+
+        // Detect surface and move the placeholder there
+        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
+            if (!this._carPlaced) {
+                // Move the placeholder to the detected surface position
+                this._surfacePlaceholder.position.copy(hitResult.position);
+                this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
+            } else {
+                this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
+            }
+        });
+
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load("Steerad.glb", (gltf) => {
+            this._model = gltf.scene;
+            this._model.traverse((child) => {
+                if (child.material) {
+                    console.log("updating material");
+                    child.material.envMap = this._envMap;
+                    child.material.needsUpdate = true;
                 }
             });
+            this._model.scale.set(0.5, 0.5, 0.5);
+            this._model.visible = false; // Initially hide the model
+            this._scene.add(this._model);
+        });
 
-            const gltfLoader = new GLTFLoader();
-            gltfLoader.load("Steerad.glb", (gltf) => {
-                this._model = gltf.scene;
-                this._model.traverse((child) => {
-                    if (child.material) {
-                        console.log("Updating material");
-                        child.material.envMap = this._envMap;
-                        child.material.needsUpdate = true;
-                    }
-                });
-                this._model.scale.set(0.5, 0.5, 0.5);
-                this._model.visible = false; // Initially hide the model
-                this._scene.add(this._model);
-            }, undefined, (err) => {
-                console.error("Error loading model:", err);
-            });
-
-            // Add touch event listeners for pinch zoom and rotation
-            this.addTouchListeners();
-        } catch (error) {
-            console.error("Error during initialization:", error);
-            throw error; // Rethrow to be caught in main execution
-        }
+        // Add touch event listeners for pinch zoom and rotation
+        this.addTouchListeners();
     }
 
     async initSDK() {
-        try {
-            this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k"); // Replace with your API key
-            const config = {
-                mode: OnirixSDK.TrackingMode.World,
-            };
-            return this.oxSDK.init(config);
-        } catch (error) {
-            console.error("Error initializing SDK:", error);
-            throw error; // Rethrow for handling in main execution
-        }
+        this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
+        const config = {
+            mode: OnirixSDK.TrackingMode.Surface,
+        };
+        return this.oxSDK.init(config);
     }
 
     placeCar() {
         this._carPlaced = true;
-        this._model.visible = true; // Show the model when the car is placed
+        this._model.visible = true; // Show the model when car is placed
         this._model.position.copy(this._surfacePlaceholder.position); // Move model to placeholder's position
         this.oxSDK.start();
     }
@@ -125,7 +117,7 @@ class OxExperience {
     }
 
     onHitTest(listener) {
-        this.oxSDK.subscribe(OnirixSDK.Events.OnWorldTrackingResult, listener);  // Subscribe to World Tracking results
+        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, listener);
     }
 
     setupRenderer(renderCanvas) {
@@ -207,23 +199,24 @@ class OxExperience {
         });
 
         canvas.addEventListener('touchmove', (event) => {
-            if (event.touches.length === 2 && this._lastPinchDistance) {
-                // Pinch zoom
-                const currentDistance = this.getDistance(event.touches);
-                const scaleFactor = currentDistance / this._lastPinchDistance;
-                this.scaleCar(scaleFactor);
-                this._lastPinchDistance = currentDistance; // Update last pinch distance
+            if (event.touches.length === 2 && this._lastPinchDistance !== null) {
+                // Pinch zoom move
+                const newDistance = this.getDistance(event.touches);
+                const scale = newDistance / this._lastPinchDistance;
+                this._lastPinchDistance = newDistance;
+                this.scaleCar(this._model.scale.x * scale); // Adjust scale
             } else if (event.touches.length === 1 && this._lastTouchX !== null) {
-                // Single finger rotation
+                // Single finger rotation move
                 const deltaX = event.touches[0].clientX - this._lastTouchX;
-                this.rotateCar(deltaX * 0.01); // Rotate based on delta
-                this._lastTouchX = event.touches[0].clientX; // Update last touch position
+                this._lastTouchX = event.touches[0].clientX;
+                this.rotateCar(this._model.rotation.y + deltaX * 0.01); // Adjust rotation
             }
         });
 
         canvas.addEventListener('touchend', () => {
-            this._lastPinchDistance = null; // Reset pinch distance
-            this._lastTouchX = null; // Reset last touch position
+            // Reset touch states on end
+            this._lastPinchDistance = null;
+            this._lastTouchX = null;
         });
     }
 
@@ -234,13 +227,119 @@ class OxExperience {
     }
 }
 
-// Execute experience
-(async () => {
-    const oxExperience = new OxExperience();
-    try {
-        await oxExperience.init();
-    } catch (error) {
-        console.error("Initialization failed:", error);
-        alert("An error occurred during initialization. Please check console for details.");
+class OxExperienceUI {
+
+    _loadingScreen = null;
+    _errorScreen = null;
+    _moveAnimation = null;
+    _errorTitle = null;
+    _errorMessage = null;
+
+    init() {
+        this._loadingScreen = document.querySelector("#loading-screen");
+        this._errorScreen = document.querySelector("#error-screen");
+        this._errorTitle = document.querySelector("#error-title");
+        this._errorMessage = document.querySelector("#error-message");
+
+        this._transformControls = document.querySelector("#transform-controls");
+        this._colorControls = document.querySelector("#color-controls");
+        this._placeButton = document.querySelector("#tap-to-place");
+        this._scaleSlider = document.querySelector("#scale-slider");
+        this._rotationSlider = document.querySelector("#rotation-slider");
+        this._black = document.querySelector("#black");
+        this._orange = document.querySelector("#orange");
+        this._blue = document.querySelector("#blue");
+        this._silver = document.querySelector("#silver");
     }
-})();
+
+    showControls() {
+        this._transformControls.style.display = "block";
+    }
+
+    showColors() {
+        this._transformControls.style.display = "none";
+        this._colorControls.style.display = "block";
+    }
+
+    onPlace(listener) {
+        this._placeButton.addEventListener('click', listener);
+    }
+
+    onScaleChange(listener) {
+        this._scaleSlider.addEventListener('input', () => { listener(this._scaleSlider.value / 100) });
+    }
+
+    onRotationChange(listener) {
+        this._rotationSlider.addEventListener('input', () => { listener(this._rotationSlider.value * Math.PI / 180) });
+    }
+
+    onBlack(listener) {
+        this._black.addEventListener('click', listener);
+    }
+
+    onOrange(listener) {
+        this._orange.addEventListener('click', listener);
+    }
+
+    onBlue(listener) {
+        this._blue.addEventListener('click', listener);
+    }
+
+    onSilver(listener) {
+        this._silver.addEventListener('click', listener);
+    }
+
+    hideLoadingScreen() {
+        this._loadingScreen.style.display = 'none';
+    }
+
+    showError(errorTitle, errorMessage) {
+        this._errorTitle.innerText = errorTitle;
+        this._errorMessage.innerText = errorMessage;
+        this._errorScreen.style.display = 'flex';
+    }
+}
+
+const oxExp = new OxExperience();
+const oxUI = new OxExperienceUI();
+
+oxUI.init();
+try {
+    await oxExp.init();
+
+    oxUI.onPlace(() => { 
+        oxExp.placeCar();
+        oxUI.showColors() 
+    });
+
+    oxExp.onHitTest(() => { 
+        if (!oxExp.isCarPlaced()) {
+            oxUI.showControls();
+        }
+    });
+
+    oxUI.onRotationChange((value) => { oxExp.rotateCar(value) });
+    oxUI.onScaleChange((value) => { oxExp.scaleCar(value) });
+
+    oxUI.onBlack(() => oxExp.changeCarColor(0x111111));
+    oxUI.onBlue(() => oxExp.changeCarColor(0x0011ff));
+    oxUI.onOrange(() => oxExp.changeCarColor(0xff2600));
+    oxUI.onSilver(() => oxExp.changeCarColor(0xffffff));
+
+    oxUI.hideLoadingScreen();
+
+} catch (error) {
+    switch (error.name) {
+        case 'INTERNAL_ERROR':
+            oxUI.showError('Internal Error', 'An unspecified error has occurred. Your device might not be compatible with this experience.');
+            break;
+        case 'CAMERA_ERROR':
+            oxUI.showError('Camera Error', 'Could not access your device\'s camera. Please, ensure you have given required permissions from your browser settings.');
+            break;
+        case 'SENSORS_ERROR':
+            oxUI.showError('Sensors Error', 'Could not access your device\'s motion sensors. Please, ensure you have given required permissions from your browser settings.');
+            break;
+        case 'LICENSE_ERROR':
+            oxUI.showError('License Error', 'This experience does not exist or has been unpublished.');
+    } 
+}
