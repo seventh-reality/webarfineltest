@@ -58,15 +58,15 @@ class OxExperience {
         });
 
         // Detect surface and move the placeholder there
-        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, (hitResult) => {
-            if (!this._carPlaced) {
-                // Move the placeholder to the detected surface position
-                this._surfacePlaceholder.position.copy(hitResult.position);
-                this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
-            } else {
-                this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
-            }
-        });
+        this.oxSDK.subscribe(OnirixSDK.Events.OnWorldTrackingResult, (trackingResult) => {
+                        if (!this._carPlaced) {
+                            // Move the placeholder to the detected position in SLAM
+                            this._surfacePlaceholder.position.copy(trackingResult.position);
+                            this._surfacePlaceholder.visible = true; // Ensure the placeholder is visible
+                        } else {
+                            this._surfacePlaceholder.visible = false; // Hide the placeholder once the car is placed
+                        }
+                    });
 
         const gltfLoader = new GLTFLoader();
         gltfLoader.load("Steerad.glb", (gltf) => {
@@ -90,7 +90,7 @@ class OxExperience {
     async initSDK() {
         this.oxSDK = new OnirixSDK("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUyMDIsInByb2plY3RJZCI6MTQ0MjgsInJvbGUiOjMsImlhdCI6MTYxNjc1ODY5NX0.8F5eAPcBGaHzSSLuQAEgpdja9aEZ6Ca_Ll9wg84Rp5k");
         const config = {
-            mode: OnirixSDK.TrackingMode.Surface,
+            mode: OnirixSDK.TrackingMode.World,
         };
         return this.oxSDK.init(config);
     }
@@ -117,8 +117,8 @@ class OxExperience {
     }
 
     onHitTest(listener) {
-        this.oxSDK.subscribe(OnirixSDK.Events.OnHitTestResult, listener);
-    }
+                this.oxSDK.subscribe(OnirixSDK.Events.OnWorldTrackingResult, listener);  // Subscribe to World Tracking results
+            }
 
     setupRenderer(renderCanvas) {
         const width = renderCanvas.width;
