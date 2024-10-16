@@ -209,19 +209,3 @@ class OxExperienceUI {
 const oxExp = new OxExperience();
 const oxUI = new OxExperienceUI();
 
-oxUI.init();
-try {
-    await oxExp.init();
-
-    oxUI.onPlace(() => { 
-        oxExp.placeCar();
-        oxUI.showColors();
-    });
-
-    // Additional UI event listeners...
-
-    oxUI.hideLoadingScreen();
-} catch (error) {
-    // Improved error handling...
-    oxUI.showError('Error', error.message);
-}
